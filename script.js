@@ -16,11 +16,11 @@ const mobile = ( navigator.userAgent.match(/Android/i)
 
 //Variables for blade mesh
 var joints = 4;
-var bladeWidth = 1;
+var bladeWidth = 1.2;
 var bladeHeight = 2;
 
 //Patch side length
-var width = 200;
+var width = 300;
 //Number of vertices on ground plane side
 var resolution = 64;
 //Distance between two ground plane vertices
@@ -290,8 +290,8 @@ const hOrig = 64;
 const wRot = Math.abs(wOrig * Math.cos(radians)) + Math.abs(hOrig * Math.sin(radians))
 const hRot = Math.abs(wOrig * Math.sin(radians)) + Math.abs(hOrig * Math.cos(radians))
 
-const xCount = 6;
-const yCount = 2;
+const xCount = 12;
+const yCount = 3;
 
 function rotateCoordinates(xOrig, yOrig) {
     var cosTheta = Math.cos(radians);
@@ -429,7 +429,7 @@ function draw(){
     // move(dT);
     lastFrame = thisFrame;
     
-// grassMaterial.uniforms.time.value = time;
+grassMaterial.uniforms.time.value = time;
     
     renderer.clear();
     renderer.render(scene, camera);
