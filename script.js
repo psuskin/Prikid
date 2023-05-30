@@ -16,11 +16,11 @@ const mobile = ( navigator.userAgent.match(/Android/i)
 
 //Variables for blade mesh
 var joints = 4;
-var bladeWidth = 0.5;
-var bladeHeight = 3;
+var bladeWidth = 1;
+var bladeHeight = 2;
 
 //Patch side length
-var width = 100;
+var width = 200;
 //Number of vertices on ground plane side
 var resolution = 64;
 //Distance between two ground plane vertices
@@ -32,7 +32,7 @@ var delta = width/resolution;
 var pos = new THREE.Vector2(0.01, 0.01);
 
 //Number of blades
-var instances = 40000;
+var instances = 20000;
 if(mobile){
     instances = 7000;
     width = 50;
@@ -51,7 +51,7 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 var FOV = 45;
 var camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 1, 20000);
 
-camera.position.set(0, 120, 0);
+camera.position.set(0, 160, 0);
 camera.lookAt(new THREE.Vector3(0,0,0));
 
 scene.add(camera);
@@ -280,14 +280,93 @@ var offsets = [];
 var scales = [];
 var halfRootAngles = [];
 
+const scale = 0.4;
+
+const degrees = 15;
+const radians = (degrees * Math.PI) / 180;
+
+const wOrig = 48;
+const hOrig = 64;
+const wRot = Math.abs(wOrig * Math.cos(radians)) + Math.abs(hOrig * Math.sin(radians))
+const hRot = Math.abs(wOrig * Math.sin(radians)) + Math.abs(hOrig * Math.cos(radians))
+
+const xCount = 6;
+const yCount = 2;
+
+function rotateCoordinates(xOrig, yOrig) {
+    var cosTheta = Math.cos(radians);
+    var sinTheta = Math.sin(radians);
+
+    var xNew = xOrig * cosTheta - yOrig * sinTheta;
+    var yNew = xOrig * sinTheta + yOrig * cosTheta;
+
+    return { x: xNew, y: yNew };
+}
+
+const hemispheres = [1, -1];
+function isInsideP(xOrig, yOrig) {
+    const rotatedCoordinates = rotateCoordinates(xOrig, yOrig);
+    let xNew = -rotatedCoordinates.x;
+    let yNew = rotatedCoordinates.y
+
+    if (xNew < (wOrig / 6) * scale && xNew > -(wOrig / 6) * scale && yNew < hOrig * scale && yNew > -hOrig * scale) {
+        return true;
+    }
+
+    for (var i = 0; i < hemispheres.length; i++) {
+        let xHem = xNew * hemispheres[i];
+        let yHem = yNew * hemispheres[i];
+        if (xHem > (wOrig / 6) * scale && yHem > 0 * scale && xHem < wOrig * scale && yHem < hOrig * scale) {
+            if (xHem < (wOrig * 2 / 3) * scale && (yHem > (hOrig * 3 / 4) * scale || yHem < (hOrig / 4) * scale)) {
+                return true;
+            }
+
+            if (xHem > (wOrig * 2 / 3) * scale && (yHem > (hOrig / 4) * scale && yHem < (hOrig * 3 / 4) * scale)) {
+                return true;
+            }
+
+            if (xHem > (wOrig * 2 / 3) * scale && yHem > (hOrig * 3 / 4) * scale) {
+                if (Math.pow(xHem - (wOrig * 2 / 3) * scale, 2) + Math.pow(yHem - (hOrig * 3 / 4) * scale, 2) < Math.pow((wOrig / 3) * scale, 2)) {
+                    return true;
+                }
+            }
+
+            if (xHem > 32 * scale && yHem < 16 * scale) {
+                if (Math.pow(xHem - (wOrig * 2 / 3) * scale, 2) + Math.pow(yHem - (hOrig / 4) * scale, 2) < Math.pow((wOrig / 3) * scale, 2)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+function generateRandomP() {
+    let xPos, yPos;
+    do {
+        xPos = (-wRot + Math.random() * wRot * 2) * scale;
+        yPos = (-hRot + Math.random() * hRot * 2) * scale;
+    } while (!isInsideP(xPos, yPos));
+
+    let xOffset = (Math.floor(Math.random() * xCount) - (xCount / 2 - 0.5)) * wRot * scale * 1;
+    let yOffset = (Math.floor(Math.random() * yCount) - (yCount / 2 - 0.5)) * hRot * scale * 1.85;
+
+    xPos += xOffset;
+    yPos += yOffset;
+    
+    return { x: xPos, y: yPos };
+}
+
 //For each instance of the grass blade
 for (let i = 0; i < instances; i++){
     
     indices.push(i/instances);
     
     //Offset of the roots
-    x = Math.random() * width - width/2;
-    z = Math.random() * width - width/2;
+    const randomCoords = generateRandomP();
+    x = randomCoords.x;
+    z = randomCoords.y;
     y = 0; 
     offsets.push(x, y, z);
 
@@ -299,7 +378,7 @@ for (let i = 0; i < instances; i++){
     if(i % 3 != 0){
         scales.push(2.0+Math.random() * 1.25);
     }else{
-        scales.push(2.0+Math.random()); 
+        scales.push(2.0+Math.random());
     }
 }
 
@@ -311,7 +390,7 @@ var indexAttribute = new THREE.InstancedBufferAttribute(new Float32Array(indices
 instancedGeometry.setAttribute( 'offset', offsetAttribute);
 instancedGeometry.setAttribute( 'scale', scaleAttribute);
 instancedGeometry.setAttribute( 'halfRootAngle', halfRootAngleAttribute);
-instancedGeometry.setAttribute( 'index', indexAttribute);
+// instancedGeometry.setAttribute( 'index', indexAttribute);
 
 //Define the material, specifying attributes, uniforms, shaders etc.
 var grassMaterial = new THREE.RawShaderMaterial( {
@@ -350,7 +429,7 @@ function draw(){
     // move(dT);
     lastFrame = thisFrame;
     
-grassMaterial.uniforms.time.value = time;
+// grassMaterial.uniforms.time.value = time;
     
     renderer.clear();
     renderer.render(scene, camera);
