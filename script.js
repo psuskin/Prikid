@@ -16,8 +16,8 @@ const mobile = ( navigator.userAgent.match(/Android/i)
 
 //Variables for blade mesh
 var joints = 4;
-var bladeWidth = 1.2;
-var bladeHeight = 2;
+var bladeWidth = 0.4;
+var bladeHeight = 5.0;
 
 //Patch side length
 var width = 300;
@@ -32,11 +32,7 @@ var delta = width/resolution;
 var pos = new THREE.Vector2(0.01, 0.01);
 
 //Number of blades
-var instances = 20000;
-if(mobile){
-    instances = 7000;
-    width = 50;
-}
+var instances = 80000;
 
 //Initialise three.js. There are two scenes which are drawn after one another with clear() called manually at the start of each frame
 //Grass scene
@@ -94,6 +90,8 @@ uniform float time;
 uniform float delta;
 uniform float posX;
 uniform float posZ;
+uniform float mousePosX;
+uniform float mousePosY;
 uniform float radius;
 uniform float width;
 
@@ -140,7 +138,7 @@ vec3 vPosition = position;
     vNormal.y /= scale;
 
     //Rotate blade around Y axis
-vec4 direction = vec4(0.0, halfRootAngle.x, 0.0, halfRootAngle.y);
+vec4 direction = vec4(0.5, 0.0, 0.0, 0.0);
     vPosition = rotateVectorByQuaternion(vPosition, direction);
     vNormal = rotateVectorByQuaternion(vNormal, direction);
 
@@ -174,7 +172,13 @@ float halfAngle = -noise * 0.1;
 noise = 0.5 + 0.5 * cos(fractionalPos.y + time);
 halfAngle -= noise * 0.05;
 
-    direction = normalize(vec4(sin(halfAngle), 0.0, -sin(halfAngle), cos(halfAngle)));
+    float distance = sqrt(pow(offset.x - mousePosX, 2.0) + pow(offset.z - mousePosY, 2.0));
+    if (distance < 3.0) {
+        direction = normalize(vec4(0.0, 0.0, 0.0, 0.0));
+    }
+    else {
+        direction = normalize(vec4(sin(halfAngle), 0.0, -sin(halfAngle), cos(halfAngle)));
+    }
 
     //Rotate blade and normals according to the wind
 vPosition = rotateVectorByQuaternion(vPosition, direction);
@@ -290,8 +294,8 @@ const hOrig = 64;
 const wRot = Math.abs(wOrig * Math.cos(radians)) + Math.abs(hOrig * Math.sin(radians))
 const hRot = Math.abs(wOrig * Math.sin(radians)) + Math.abs(hOrig * Math.cos(radians))
 
-const xCount = 12;
-const yCount = 3;
+const xCount = 1;
+const yCount = 1;
 
 function rotateCoordinates(xOrig, yOrig) {
     var cosTheta = Math.cos(radians);
@@ -399,6 +403,8 @@ uniforms: {
         delta: {type: 'float', value: delta },
     posX: {type: 'float', value: pos.x },
     posZ: {type: 'float', value: pos.y },
+    mousePosX: {type: 'float', value: 0 },
+    mousePosY: {type: 'float', value: 0 },
     width: {type: 'float', value: width },
     // map: { value: grassTexture},
     // alphaMap: { value: alphaMap},
@@ -412,6 +418,20 @@ side: THREE.DoubleSide
 
 var grass = new THREE.Mesh(instancedGeometry, grassMaterial);
 scene.add(grass);
+
+window.addEventListener('mousemove', onMouseMove, false);
+
+camera.lookAt(0, 0, 0);
+let p1 = new THREE.Vector3(1, 0, 1).project(camera);
+const xMax = 1 / p1.x
+const yMax = 1 / p1.y
+function onMouseMove(event) {
+    const mouseX = (event.clientX / window.innerWidth) * 2 * xMax - xMax;
+    const mouseY = -((event.clientY / window.innerHeight) * 2 * yMax - yMax);
+
+    grassMaterial.uniforms.mousePosX.value = mouseX;
+    grassMaterial.uniforms.mousePosY.value = mouseY;
+}
 
 //************** Draw **************
 var time = 0;
