@@ -17,7 +17,7 @@ const mobile = ( navigator.userAgent.match(/Android/i)
 //Variables for blade mesh
 var joints = 4;
 var bladeWidth = 0.4;
-var bladeHeight = 5.0;
+var bladeHeight = 1.6;
 
 //Patch side length
 var width = 300;
@@ -32,7 +32,7 @@ var delta = width/resolution;
 var pos = new THREE.Vector2(0.01, 0.01);
 
 //Number of blades
-var instances = 80000;
+var instances = 3000000;
 
 //Initialise three.js. There are two scenes which are drawn after one another with clear() called manually at the start of each frame
 //Grass scene
@@ -138,7 +138,7 @@ vec3 vPosition = position;
     vNormal.y /= scale;
 
     //Rotate blade around Y axis
-vec4 direction = vec4(0.5, 0.0, 0.0, 0.0);
+vec4 direction = vec4(0.8, 0.0, 0.0, 0.0);
     vPosition = rotateVectorByQuaternion(vPosition, direction);
     vNormal = rotateVectorByQuaternion(vNormal, direction);
 
@@ -284,7 +284,7 @@ var offsets = [];
 var scales = [];
 var halfRootAngles = [];
 
-const scale = 0.4;
+const scale = 0.125;
 
 const degrees = 15;
 const radians = (degrees * Math.PI) / 180;
@@ -294,8 +294,8 @@ const hOrig = 64;
 const wRot = Math.abs(wOrig * Math.cos(radians)) + Math.abs(hOrig * Math.sin(radians))
 const hRot = Math.abs(wOrig * Math.sin(radians)) + Math.abs(hOrig * Math.cos(radians))
 
-const xCount = 1;
-const yCount = 1;
+const xCount = 31;
+const yCount = 8;
 
 function rotateCoordinates(xOrig, yOrig) {
     var cosTheta = Math.cos(radians);
